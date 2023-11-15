@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: record
+  namespace: 
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: record
+  template:
+    metadata:
+      labels:
+        app: record
+    spec:
+      containers:
+      - name: record
+        image: vijiliceskct/record:latest
+
+        ports:
+        - containerPort: 5000

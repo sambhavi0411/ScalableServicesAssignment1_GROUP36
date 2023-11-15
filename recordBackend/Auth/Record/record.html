@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        #response {
+            margin-top: 10px;
+            color: green; /* Default color for success messages */
+        }
+
+        .error {
+            color: red; /* Color for error messages */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create an Order</h1>
+        <form id="orderForm">
+            <label for="user_id">User ID:</label>
+            <input type="text" id="user_id" name="user_id"><br>
+
+            <label for="product_id">Product ID:</label>
+            <input type="text" id="product_id" name="product_id"><br>
+
+            <label for="quantity">Quantity:</label>
+            <input type="text" id="quantity" name="quantity"><br>
+
+            <button type="submit">Create Order</button>
+        </form>
+
+        <button id="listOrdersBtn">List Orders</button>
+        <div id="response" class="success"></div>
+        <div id="ordersTable"></div>
+    </div>
+
+    <script>
+        document.getElementById("orderForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("http://localhost:5000/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(Object.fromEntries(formData)),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const responseDiv = document.getElementById("response");
+                    responseDiv.textContent = data.message;
+                    responseDiv.classList.remove("error"); // Remove error class
+                    responseDiv.classList.add("success"); // Add success class
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    const responseDiv = document.getElementById("response");
+                    responseDiv.textContent = "Error: " + error.message;
+                    responseDiv.classList.remove("success"); // Remove success class
+                    responseDiv.classList.add("error"); // Add error class
+                });
+        });
+
+        document.getElementById("listOrdersBtn").addEventListener("click", function () {
+            fetch("http://localhost:5000/orders")
+                .then(response => response.json())
+                .then(data => {
+                    const ordersTable = document.getElementById("ordersTable");
+                    ordersTable.innerHTML = ""; // Clear previous content
+                    if (data.orders.length > 0) {
+                        const table = document.createElement("table");
+                        const headerRow = table.insertRow(0);
+                        for (let key in data.orders[0]) {
+                            const headerCell = document.createElement("th");
+                            headerCell.appendChild(document.createTextNode(key));
+                            headerRow.appendChild(headerCell);
+                        }
+
+                        data.orders.forEach((order, index) => {
+                            const row = table.insertRow(index + 1);
+                            for (let key in order) {
+                                const cell = row.insertCell();
+                                cell.appendChild(document.createTextNode(order[key]));
+                            }
+
+                            // Add a "Shipped" button
+                            const shippedBtn = document.createElement("button");
+                            shippedBtn.innerText = "Shipped";
+                            shippedBtn.addEventListener("click", function () {
+                                updateStatus("Shipped", order.id);
+                            });
+                            const shippedCell = row.insertCell();
+                            shippedCell.appendChild(shippedBtn);
+
+                            // Add a "Cancel Order" button for each order
+                            const cancelBtn = document.createElement("button");
+                            cancelBtn.innerText = "Cancel Order";
+                            const cancelCell = row.insertCell();
+                            cancelCell.appendChild(cancelBtn);
+
+                            // Add an event listener to the "Cancel Order" button
+                            cancelBtn.addEventListener("click", function () {
+                                // Send a DELETE request to cancel the order here
+                                const orderId = order.id;
+                                fetch(`http://localhost:5000/orders/${orderId}`, {
+                                    method: "DELETE"
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.message === "Order canceled successfully") {
+                                            // Remove the canceled order from the table
+                                            table.deleteRow(index + 1);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error("Error:", error);
+                                    });
+                            });
+                        });
+                        ordersTable.appendChild(table);
+                    } else {
+                        ordersTable.textContent = "No orders available.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        });
+
+        // Function to update the order status
+        function updateStatus(status, orderId) {
+            fetch(`http://localhost:5000/orders/${orderId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ status: status })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Order status updated successfully") {
+                        // Update the status in the table
+                        const statusCell = document.querySelector(`select[name="status${orderId}"]`);
+                        statusCell.value = status;
+                        const successMessage = document.createElement("span");
+                        successMessage.textContent = "Status updated successfully";
+                        successMessage.style.color = "green";
+                        statusCell.parentNode.appendChild(successMessage);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search
+  namespace: 
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: search
+  template:
+    metadata:
+      labels:
+        app: search
+    spec:
+      containers:
+      - name: search
+        image: vijiliceskct/search:latest
+
+        ports:
+        - containerPort: 5001

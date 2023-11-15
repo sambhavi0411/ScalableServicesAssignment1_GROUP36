@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlitedb
+  namespace: 
+spec:
+  serviceName: sqlitedb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlitedb
+  template:
+    metadata:
+      labels:
+        app: sqlitedb
+    spec:
+      containers:
+      - name: sqlitedb
+        image: sqlitedb
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: sqlitedb
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: 
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

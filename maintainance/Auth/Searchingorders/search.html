@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Status</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Order Status</h1>
+    <label for="search-id">Search by ID:</label>
+    <input type="text" id="search-id" placeholder="Enter Order ID">
+    <button onclick="searchById()">Search</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="order-status-table"></tbody>
+    </table>
+
+    <script>
+        const orderStatusTable = document.getElementById('order-status-table');
+        const searchIdInput = document.getElementById('search-id');
+
+        // Function to filter order statuses by ID
+        function searchById() {
+            const searchId = searchIdInput.value;
+            if (!searchId) return;
+
+            const rows = orderStatusTable.querySelectorAll('tr');
+            rows.forEach(row => {
+                const orderIdCell = row.querySelector('td:first-child');
+                if (orderIdCell) {
+                    const orderId = orderIdCell.textContent;
+                    row.style.display = orderId.includes(searchId) ? 'table-row' : 'none';
+                }
+            });
+        }
+
+        // Fetch order statuses from the API and populate the table
+        fetch('http://localhost:5001/order_statuses')
+            .then(response => response.json())
+            .then(data => {
+                data.order_statuses.forEach(orderStatus => {
+                    const row = document.createElement('tr');
+                    const orderIdCell = document.createElement('td');
+                    const statusCell = document.createElement('td');
+
+                    orderIdCell.textContent = orderStatus.id;
+                    statusCell.textContent = orderStatus.status;
+
+                    row.appendChild(orderIdCell);
+                    row.appendChild(statusCell);
+                    orderStatusTable.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+    </script>
+</body>
+</html>

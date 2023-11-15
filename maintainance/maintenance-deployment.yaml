@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maintenance
+  namespace: 
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: maintenance
+  template:
+    metadata:
+      labels:
+        app: maintenance
+    spec:
+      containers:
+      - name: search
+        image: maintenance:latest
+
+        ports:
+        - containerPort: 5002
